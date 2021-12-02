@@ -153,7 +153,7 @@ class PredictEnv:
         samples = ensemble_samples[model_idxes, batch_idxes]
         model_means = ensemble_model_means[model_idxes, batch_idxes]
         model_stds = ensemble_model_stds[model_idxes, batch_idxes]
-
+        print("model mean shape:", model_means.shape)
 
         log_prob, dev = self._get_logprob(samples, ensemble_model_means, ensemble_model_vars)
 
@@ -181,7 +181,7 @@ class PredictEnv:
             # rewards += 1 * KL_result
             
             #reward = variance of predicted states
-            rewards = np.var(next_obs, axis=0)
+            rewards = np.var(model_means, axis=0)
             print("intrinsic reward:", rewards.shape)
 
         batch_size = model_means.shape[0]
