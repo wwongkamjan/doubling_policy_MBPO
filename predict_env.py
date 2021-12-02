@@ -181,7 +181,8 @@ class PredictEnv:
             # rewards += 1 * KL_result
             
             #reward = variance of predicted states
-            rewards = np.var(model_means, axis=0)
+            rewards = np.var(model_means, axis=1)
+            rewards = np.reshape(rewards, [batch_size, 1])
             print("intrinsic reward:", rewards.shape)
 
         batch_size = model_means.shape[0]
