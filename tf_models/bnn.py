@@ -10,7 +10,7 @@ from collections import OrderedDict
 
 import tensorflow.compat.v1 as tf
 import numpy as np
-from tqdm import trange
+# from tqdm import trange
 from scipy.io import savemat, loadmat
 
 from tf_models.utils import get_required_argument, TensorStandardScaler
