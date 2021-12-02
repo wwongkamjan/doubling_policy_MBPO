@@ -98,6 +98,12 @@ def readParser():
     parser.add_argument('--cuda', default=True, action="store_true",
                         help='run on CUDA (default: True)')
 
+    parser.add_argument('--exp_name', default='exp1',
+                        help='file name')
+    parser.add_argument('--save_dir', default='/exp/',
+                        help='dir name')
+
+
     parser.add_argument('--exp_log_name', default='exp_walker_0.txt')
     parser.add_argument('--exploration', type=bool, default=False)
 
@@ -305,9 +311,16 @@ def main(args=None):
     env_sampler = EnvSampler(env)
     env_sampler_test = EnvSampler(env_test)
 
+    # exp path
+    # args.exp_dir = os.path.join(args.save_dir, args.exp_name)
+    if not os.path.isdir(args.save_dir):
+        os.makedirs(args.save_dir)
+
+    # logger
+    log_file = os.path.join(args.save_dir, '{}.txt'.format(args.exp_name))
     logger = logging.getLogger(__name__)
     logger.setLevel(level=logging.INFO)
-    handler = logging.FileHandler(args.exp_log_name)
+    handler = logging.FileHandler(log_file)
     handler.setLevel(logging.INFO)
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     handler.setFormatter(formatter)
