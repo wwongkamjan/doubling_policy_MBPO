@@ -122,7 +122,7 @@ class PredictEnv:
 
         return log_prob, stds
 
-    def step(self, obs, act, policy_type, deterministic=False):
+    def step(self, obs, act, explore_policy, deterministic=False):
         if len(obs.shape) == 1:
             obs = obs[None]
             act = act[None]
@@ -161,7 +161,7 @@ class PredictEnv:
         terminals = self._termination_fn(self.env_name, obs, act, next_obs)
         print("env reward:", rewards.shape)
 
-        if policy_type == 'explore':
+        if explore_policy:
             # model_index = np.arange(0, num_models).tolist()
             # model_idxes_rest = np.array([model_index[:i] + model_index[i + 1:] for i in model_idxes])
             # model_vars = ensemble_model_vars[model_idxes, batch_idxes]

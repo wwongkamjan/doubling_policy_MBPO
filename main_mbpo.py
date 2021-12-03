@@ -134,7 +134,7 @@ def train(args, env_sampler, env_sampler_test, predict_env, agent, exp_agent, en
         exploit_w = set_exploit_w(args, epoch_step)
         print("update exploit w", exploit_w)
         selected_agent= select_policy(explore_w, exploit_w, agent, exp_agent)
-        print("epoch: " + str(epoch_step) + ", policy: ", selected_agent.policy_type)
+        print("epoch: " + str(epoch_step) + ", if explore policy: ", selected_agent.explore_policy)
         for i in count():
             cur_step = total_step - start_step
 
@@ -233,7 +233,7 @@ def rollout_model(args, predict_env, agent, model_pool, env_pool, rollout_length
     for i in range(rollout_length):
         # TODO: Get a batch of actions
         action = agent.select_action(state)
-        next_states, rewards, terminals, info = predict_env.step(state, action, policy_type=agent.policy_type)
+        next_states, rewards, terminals, info = predict_env.step(state, action, explore_policy=agent.explore_policy)
         # TODO: Push a batch of samples
         model_pool.push_batch([(state[j], action[j], rewards[j], next_states[j], terminals[j]) for j in range(state.shape[0])])
         nonterm_mask = ~terminals.squeeze(-1)
@@ -314,8 +314,8 @@ def main(args=None):
     # Intial agent
     # we should have two agents - one is to explore and the other one is to exploit
     # explore_agent will get reward which be defined by uncertainty of predicted states 
-    exp_agent = SAC(env.observation_space.shape[0], env.action_space, args, 'explore')
-    agent = SAC(env.observation_space.shape[0], env.action_space, args, 'exploit')
+    exp_agent = SAC(env.observation_space.shape[0], env.action_space, args, explore_policy=True)
+    agent = SAC(env.observation_space.shape[0], env.action_space, args,  explore_policy=False)
 
     # Initial ensemble model
     state_size = np.prod(env.observation_space.shape)
