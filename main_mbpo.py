@@ -106,7 +106,7 @@ def readParser():
 
     parser.add_argument('--exp_log_name', default='exp_walker_0.txt')
     # argument for exploration experiment
-    parser.add_argument('--exploration', type=bool, default=False)
+    # parser.add_argument('--exploration', type=bool, default=False)
     parser.add_argument('--exploit_min_epoch', type=int, default=10, metavar='A',
                         help='min epoch to start using exploitation policy in an exploration steps')
     parser.add_argument('--exploit_max_epoch', type=int, default=100, metavar='A',
