@@ -134,7 +134,7 @@ def train(args, env_sampler, env_sampler_test, predict_env, agent, exp_agent, en
         exploit_w = set_exploit_w(args, epoch_step)
         print("update exploit w", exploit_w)
         selected_agent= select_policy(explore_w, exploit_w, agent, exp_agent)
-        print("epoch: " + str(epoch_step) + ", if explore policy: ", selected_agent.explore_policy)
+        print("epoch: " + str(epoch_step) + ", if explore policy: " + str(selected_agent.explore_policy))
         for i in count():
             cur_step = total_step - start_step
 
