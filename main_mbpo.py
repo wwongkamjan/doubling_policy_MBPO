@@ -132,7 +132,7 @@ def train(args, env_sampler, env_sampler_test, predict_env, agent, exp_agent, en
         train_exp_policy_steps = 0
         explore_w = 1
         exploit_w = set_exploit_w(args, epoch_step)
-        print("update exploit w", exploit_w)
+        print("update exploit w: " +str(exploit_w))
         selected_agent= select_policy(explore_w, exploit_w, agent, exp_agent)
         print("epoch: " + str(epoch_step) + ", if explore policy: " + str(selected_agent.explore_policy))
         for i in count():
@@ -156,9 +156,9 @@ def train(args, env_sampler, env_sampler_test, predict_env, agent, exp_agent, en
             
             cur_state, action, next_state, reward, done, info = env_sampler.sample(selected_agent)
             env_pool.push(cur_state, action, reward, next_state, done)
-
+            
+            print("train two policies")
             if len(env_pool) > args.min_pool_size:
-                print("train two policies")
                 train_policy_steps += train_policy_repeats(args, total_step, train_policy_steps, cur_step, env_pool, model_pool, agent)
                 train_exp_policy_steps += train_policy_repeats(args, total_step, train_exp_policy_steps, cur_step, env_pool, exp_model_pool, exp_agent)
 
@@ -192,7 +192,7 @@ def set_exploit_w(args, epoch_step):
                               / (args.exploit_max_epoch - args.exploit_min_epoch) * (args.exploit_max_value - args.exploit_min_value),
                               args.exploit_min_value), args.exploit_max_value))
     
-    return int(exploit_w)
+    return exploit_w
 def set_rollout_length(args, epoch_step):
     rollout_length = (min(max(args.rollout_min_length + (epoch_step - args.rollout_min_epoch)
                               / (args.rollout_max_epoch - args.rollout_min_epoch) * (args.rollout_max_length - args.rollout_min_length),
