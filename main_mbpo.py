@@ -203,8 +203,11 @@ def select_policy(explore_w, exploit_w, agent, exp_agent):
     w1 = explore_w
     w2 = exploit_w
     p = [w1/(w1+w2), w2/(w1+w2)]
-    selected_agent = np.random.choice([0, 1], 1, p=p)
-    return selected_agent[0]
+    selected_agent = np.random.choice([True, False], 1, p=p)
+    if selected_agent[0]:
+        return exp_agent
+    else:
+        return agent
 
 def train_predict_model(args, env_pool, predict_env):
     # Get all samples from environment
