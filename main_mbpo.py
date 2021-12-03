@@ -105,21 +105,36 @@ def readParser():
 
 
     parser.add_argument('--exp_log_name', default='exp_walker_0.txt')
+    # argument for exploration experiment
     parser.add_argument('--exploration', type=bool, default=False)
+    parser.add_argument('--exploit_min_epoch', type=int, default=10, metavar='A',
+                        help='min epoch to start using exploitation policy in an exploration steps')
+    parser.add_argument('--exploit_max_epoch', type=int, default=100, metavar='A',
+                    help='min epoch to start using exploitation policy in an exploration steps')
+    parser.add_argument('--exploit_min_w', type=int, default=0.1, metavar='A',
+                    help='min weight for exploitation policy in an exploration steps')
+    parser.add_argument('--exploit_max_w', type=int, default=5, metavar='A',
+                    help='max weight for exploitation policy in an exploration steps')
 
     return parser.parse_args()
 
 
-def train(args, env_sampler, env_sampler_test, predict_env, agent, env_pool, model_pool, logger):
+def train(args, env_sampler, env_sampler_test, predict_env, agent, exp_agent, env_pool, model_pool, exp_model_pool, logger):
     total_step = 0
     reward_sum = 0
     rollout_length = 1
     #where to put exploration policy
-    exploration_before_start(args, env_sampler, env_pool, agent)
+    exploration_before_start(args, env_sampler, env_pool, exp_agent) 
 
     for epoch_step in range(args.num_epoch):
         start_step = total_step
         train_policy_steps = 0
+        train_exp_policy_steps = 0
+        explore_w = 1
+        exploit_w = set_exploit_w(args, epoch_step)
+        print("update exploit w", exploit_w)
+        selected_agent= select_policy(explore_w, exploit_w, agent, exp_agent)
+        print("epoch: " + str(epoch_step) + ", policy: ", selected_agent.policy_type)
         for i in count():
             cur_step = total_step - start_step
 
@@ -133,14 +148,19 @@ def train(args, env_sampler, env_sampler_test, predict_env, agent, env_pool, mod
                 if rollout_length != new_rollout_length:
                     rollout_length = new_rollout_length
                     model_pool = resize_model_pool(args, rollout_length, model_pool)
-
+                    exp_model_pool = resize_model_pool(args, rollout_length, exp_model_pool)
+                    
+                print("model-rollout: collecting trajectories for explore and exploit model pool")
                 rollout_model(args, predict_env, agent, model_pool, env_pool, rollout_length)
-
-            cur_state, action, next_state, reward, done, info = env_sampler.sample(agent)
+                rollout_model(args, predict_env, exp_agent, exp_model_pool, env_pool, rollout_length)
+            
+            cur_state, action, next_state, reward, done, info = env_sampler.sample(selected_agent)
             env_pool.push(cur_state, action, reward, next_state, done)
 
             if len(env_pool) > args.min_pool_size:
+                print("train two policies")
                 train_policy_steps += train_policy_repeats(args, total_step, train_policy_steps, cur_step, env_pool, model_pool, agent)
+                train_exp_policy_steps += train_policy_repeats(args, total_step, train_exp_policy_steps, cur_step, env_pool, exp_model_pool, exp_agent)
 
             total_step += 1
 
@@ -167,13 +187,24 @@ def exploration_before_start(args, env_sampler, env_pool, agent):
         cur_state, action, next_state, reward, done, info = env_sampler.sample(agent)
         env_pool.push(cur_state, action, reward, next_state, done)
 
-
+def set_exploit_w(args, epoch_step):
+    exploit_w = (min(max(args.exploit_min_value + (epoch_step - args.exploit_min_epoch)
+                              / (args.exploit_max_epoch - args.exploit_min_epoch) * (args.exploit_max_value - args.exploit_min_value),
+                              args.exploit_min_value), args.exploit_max_value))
+    
+    return int(exploit_w)
 def set_rollout_length(args, epoch_step):
     rollout_length = (min(max(args.rollout_min_length + (epoch_step - args.rollout_min_epoch)
                               / (args.rollout_max_epoch - args.rollout_min_epoch) * (args.rollout_max_length - args.rollout_min_length),
                               args.rollout_min_length), args.rollout_max_length))
     return int(rollout_length)
 
+def select_policy(explore_w, exploit_w, agent, exp_agent):
+    w1 = explore_w
+    w2 = exploit_w
+    p = [w1/(w1+w2), w2/(w1+w2)]
+    selected_agent = np.random.choice([0, 1], 1, p=p)
+    return selected_agent[0]
 
 def train_predict_model(args, env_pool, predict_env):
     # Get all samples from environment
@@ -202,7 +233,7 @@ def rollout_model(args, predict_env, agent, model_pool, env_pool, rollout_length
     for i in range(rollout_length):
         # TODO: Get a batch of actions
         action = agent.select_action(state)
-        next_states, rewards, terminals, info = predict_env.step(state, action)
+        next_states, rewards, terminals, info = predict_env.step(state, action, policy_type=agent.policy_type)
         # TODO: Push a batch of samples
         model_pool.push_batch([(state[j], action[j], rewards[j], next_states[j], terminals[j]) for j in range(state.shape[0])])
         nonterm_mask = ~terminals.squeeze(-1)
@@ -283,8 +314,8 @@ def main(args=None):
     # Intial agent
     # we should have two agents - one is to explore and the other one is to exploit
     # explore_agent will get reward which be defined by uncertainty of predicted states 
-    # explore_agent = SAC(env.observation_space.shape[0], env.action_space, args)
-    agent = SAC(env.observation_space.shape[0], env.action_space, args)
+    exp_agent = SAC(env.observation_space.shape[0], env.action_space, args, 'explore')
+    agent = SAC(env.observation_space.shape[0], env.action_space, args, 'exploit')
 
     # Initial ensemble model
     state_size = np.prod(env.observation_space.shape)
@@ -306,6 +337,7 @@ def main(args=None):
     model_steps_per_epoch = int(1 * rollouts_per_epoch)
     new_pool_size = args.model_retain_epochs * model_steps_per_epoch
     model_pool = ReplayMemory(new_pool_size)
+    exp_model_pool = ReplayMemory(new_pool_size)
 
     # Sampler of environment
     env_sampler = EnvSampler(env)
@@ -326,7 +358,7 @@ def main(args=None):
     handler.setFormatter(formatter)
     logger.addHandler(handler)
 
-    train(args, env_sampler, env_sampler_test, predict_env, agent, env_pool, model_pool, logger)
+    train(args, env_sampler, env_sampler_test, predict_env, agent, exp_agent, env_pool, model_pool, exp_model_pool, logger)
 
 
 if __name__ == '__main__':

@@ -7,7 +7,7 @@ from sac.model import GaussianPolicy, QNetwork, DeterministicPolicy
 
 
 class SAC(object):
-    def __init__(self, num_inputs, action_space, args):
+    def __init__(self, num_inputs, action_space, args, policy_type):
         torch.autograd.set_detect_anomaly(True)
         self.gamma = args.gamma
         self.tau = args.tau
@@ -24,6 +24,7 @@ class SAC(object):
 
         self.critic_target = QNetwork(num_inputs, action_space.shape[0], args.hidden_size).to(self.device)
         hard_update(self.critic_target, self.critic)
+        self.policy_type = policy_type
 
         if self.policy_type == "Gaussian":
             # Target Entropy = −dim(A) (e.g. , -6 for HalfCheetah-v2) as given in the paper
