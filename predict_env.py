@@ -122,7 +122,7 @@ class PredictEnv:
 
         return log_prob, stds
 
-    def step(self, obs, act, deterministic=False, policy_type):
+    def step(self, obs, act, policy_type, deterministic=False):
         if len(obs.shape) == 1:
             obs = obs[None]
             act = act[None]
