@@ -1,0 +1,2 @@
+slurmstepd: error: *** JOB 453734 ON cml06 CANCELLED AT 2021-12-03T03:26:03 ***
+srun: Job step aborted: Waiting up to 32 seconds for job step to finish.

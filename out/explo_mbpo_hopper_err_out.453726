@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "main_mbpo.py", line 17, in <module>
+    from predict_env import PredictEnv
+  File "/nfshomes/wwongkam/doubling_policy_MBPO/predict_env.py", line 125
+    def step(self, obs, act, deterministic=False, policy_type):
+            ^
+SyntaxError: non-default argument follows default argument
+srun: error: cml06: task 0: Exited with exit code 1
