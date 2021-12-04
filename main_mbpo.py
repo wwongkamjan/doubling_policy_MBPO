@@ -111,9 +111,9 @@ def readParser():
                         help='min epoch to start using exploitation policy in an exploration steps')
     parser.add_argument('--exploit_max_epoch', type=int, default=100, metavar='A',
                     help='min epoch to start using exploitation policy in an exploration steps')
-    parser.add_argument('--exploit_min_value', type=int, default=0.1, metavar='A',
+    parser.add_argument('--exploit_min_value', type=int, default=0.5, metavar='A',
                     help='min weight for exploitation policy in an exploration steps')
-    parser.add_argument('--exploit_max_value', type=int, default=5, metavar='A',
+    parser.add_argument('--exploit_max_value', type=int, default=10, metavar='A',
                     help='max weight for exploitation policy in an exploration steps')
 
     return parser.parse_args()
@@ -135,10 +135,10 @@ def train(args, env_sampler, env_sampler_test, predict_env, agent, exp_agent, en
         print("update exploit w: " +str(exploit_w))
         selected_agent= select_policy(explore_w, exploit_w, agent, exp_agent)
         print("epoch: " + str(epoch_step) + ", if explore policy: " + str(selected_agent.explore_policy))
-        if selected_agent.explore_policy:
-            selected_model_pool = exp_model_pool
-        else:
-            selected_model_pool = model_pool
+        # if selected_agent.explore_policy:
+        #     selected_model_pool = exp_model_pool
+        # else:
+        #     selected_model_pool = model_pool
         for i in count():
             cur_step = total_step - start_step
 
@@ -154,16 +154,18 @@ def train(args, env_sampler, env_sampler_test, predict_env, agent, exp_agent, en
                     model_pool = resize_model_pool(args, rollout_length, model_pool)
                     exp_model_pool = resize_model_pool(args, rollout_length, exp_model_pool)
                     
-                print("model-rollout: collecting trajectories for selected policy")
-                rollout_model(args, predict_env, selected_agent, selected_model_pool, env_pool, rollout_length)
+                # print("model-rollout: collecting trajectories for selected policy")
+                rollout_model(args, predict_env, agent, model_pool, env_pool, rollout_length)
+                rollout_model(args, predict_env, exp_agent, exp_model_pool, env_pool, rollout_length)
                 
             
             cur_state, action, next_state, reward, done, info = env_sampler.sample(selected_agent)
             env_pool.push(cur_state, action, reward, next_state, done)
             
-            print("train two policies")
+            # print("train two policies")
             if len(env_pool) > args.min_pool_size:
-                train_exp_policy_steps += train_policy_repeats(args, total_step, train_exp_policy_steps, cur_step, env_pool, selected_model_pool, selected_agent)
+                train_policy_steps += train_policy_repeats(args, total_step, train_policy_steps, cur_step, env_pool, model_pool, agent)
+                train_exp_policy_steps += train_policy_repeats(args, total_step, train_exp_policy_steps, cur_step, env_pool, exp_model_pool, exp_agent)
 
                 
 
