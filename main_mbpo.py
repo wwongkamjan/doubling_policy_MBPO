@@ -111,9 +111,9 @@ def readParser():
                         help='min epoch to start using exploitation policy in an exploration steps')
     parser.add_argument('--exploit_max_epoch', type=int, default=100, metavar='A',
                     help='min epoch to start using exploitation policy in an exploration steps')
-    parser.add_argument('--exploit_min_value', type=int, default=0.5, metavar='A',
+    parser.add_argument('--exploit_min_value', type=float, default=0.1, metavar='A',
                     help='min weight for exploitation policy in an exploration steps')
-    parser.add_argument('--exploit_max_value', type=int, default=10, metavar='A',
+    parser.add_argument('--exploit_max_value', type=float, default=5, metavar='A',
                     help='max weight for exploitation policy in an exploration steps')
 
     return parser.parse_args()
