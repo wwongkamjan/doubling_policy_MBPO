@@ -12,7 +12,7 @@
 module add cuda/11.1.1
 module load cudnn/v8.2.1
 
-srun bash -c "hostname; python3 main_mbpo.py --env_name 'Hopper-v2' --num_epoch 100 --model_type 'pytorch' --save_dir 'exploration' --exp_name 'explo_hopper_0'"
+srun bash -c "hostname; python3 main_mbpo.py --env_name 'Hopper-v2' --num_epoch 100 --model_type 'pytorch' --save_dir 'exploration' --exp_name 'explo_hopper_1'"
 # once the end of the batch script is reached your job allocation will be revoked
 
 
